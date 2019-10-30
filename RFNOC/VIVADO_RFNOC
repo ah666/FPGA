@@ -1,0 +1,51 @@
+https://kb.ettus.com/Getting_Started_with_RFNoC_Development#Getting_started_with_UHD_.2B_RFNoC
+
+先装vivado:已经下载bin文件：
+然后进入目录：
+$ sudo chmod +x name.bin 
+$ sudo ./name.bin
+选择安装，路径。等待下载
+
+安装成功后：
+启动vivado：
+$ source /opt/Xilinx/Vivado/2017.4/settings64.sh 
+$ vivado
+-----------------------------------------------------------------------------------
+需要license激活(官网)，安装的是system edition HLx, 所以想要使用RFNOC和USRP，目前找到的是30天试用的license
+-----------------------------------------------------------------------------------
+可能无法识别usrp对应的主机名称：
+$ ifconfig
+查看192.168.40.1对应的HWaddr后的IP
+$ sudo nano /etc/udev/rules.d/70-persistent-net.rules
+
+把以下句子复制进去：
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="xx:xx:xx:xx:xx:xx", ATTR{dev_id}=="0x0", ATTR{type}=="1", NAME="eth0"
+
+修改xx:xx:xx:xx:xx:xx为对应的IP，并确认名称为eth0，然后ctrl+X退出，选择Y保存
+
+修改对应名称enpxxxx为eth0：
+$ ethtool -i enp1s0f1(enpxxxx)
+$ sudo modprobe -r ixgbe
+$ sudo udevadm control --reload-rules
+$ sudo udevadm trigger
+-------------------------------------------------------------------------------------
+产生RFNOC镜像：
+进文件夹 /uhd/fpga-src/usrp3/tools/scripts  （因为是X310所以选择usrp3）
+运行GUI程序：
+$ sudo ./uhd_image_builder_gui.py
+（选择需要产生的对象，中间框选择增加的模块到右边框，然后勾选“fill with FIFO”,意思是10个block,你选了几个，剩下的用fifo填充）
+然后点右下角 generate .bit file 等待约1小时
+
+出现：
+Build DONE... X310_RFNOC_XG
+即可关闭gui
+
+然后把镜像烧进USRP：
+$ uhd_image_loader --args "type=x300,addr={IP_ADDRESS}" --fpga-path {USER_PREFIX}/src/uhd-fpga/usrp3/top/x300/build/usrp_x310_fpga_RFNOC_XG.bit
+
+结束后：
+$ uhd_usrp_probe 查看
+
+END------------------------------------------------------
+
+https://kb.ettus.com/Getting_Started_with_RFNoC_Development#Getting_started_with_UHD_.2B_RFNoC
